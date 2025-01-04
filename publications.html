@@ -17,11 +17,11 @@ body_attr: >-
  其它的：要正常按年份分组
  先去掉上面已经被分到 under_review 的条目，再 group_by_exp
 {% endcomment %}
-{% assign normal_pubs = site.publications 
-  | reject_exp: "item", "item.date == nil and item.pub_post == 'Under review.'"
+{% assign normal_pubs = site.publications
+  | reject:'date', null
   | sort: "date"
   | reverse
-  | group_by_exp: "item", "item.date | date: '%Y'"
+  | group_by_exp:"item","item.date | date: '%Y'"
 %}
 
 <div class="row">
