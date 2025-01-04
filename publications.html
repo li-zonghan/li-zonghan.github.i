@@ -9,8 +9,8 @@ body_attr: >-
 {% comment %}
   1. Separate "Under review" publications from those with dates.
 {% endcomment %}
-{% assign under_review_pubs = site.publications | where: 'pub_post', 'Under review.' | where_exp: 'item', 'item.date == null' %}
-{% assign dated_pubs = site.publications | where_exp: 'item', 'item.pub_post != "Under review." or item.date != null' %}
+{% assign under_review_pubs = site.publications | where: 'pub_post', 'Under review.' | where_exp: 'item', 'item.date == ""' %}
+{% assign dated_pubs = site.publications | where_exp: 'item', 'item.pub_post != "Under review." or item.date != ""' %}
 {% assign pubs_by_year = dated_pubs | sort: 'date' | reverse | group_by_exp: 'item', 'item.date | date: "%Y"' %}
 
 <div class="row">
@@ -28,7 +28,6 @@ body_attr: >-
         
         <!-- Display Publications Grouped by Year -->
         {% for year in pubs_by_year %}
-            {% assign num_papers = year.items | size %}
             <h2 class="pt-4" id="year-{{ year.name }}">{{ year.name }}</h2>
             <div class="my-0 p-0 bg-white shadow-sm rounded-sm">
                 {% for item in year.items %}
