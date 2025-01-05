@@ -7,53 +7,46 @@ body_attr: >-
 ---
 
 {% comment %}
- 先找出：没有 date 且 pub_post == 'Under review.' 的条目
+1. 先将所有 publications 分成两部分：
+   - under_review_pubs: 条件 (date == 1990-01-01 && pub_post == "Under review")
+   - normal_pubs: 其他条目
 {% endcomment %}
-{% assign under_review_pubs = site.publications 
-  | where_exp: "item", "item.date == nil and item.pub_post == 'Under review.'"
-%}
+{% assign under_review_pubs = site.publications | where_exp: "item", "item.date == '1990-01-01' and item.pub_post == 'Under review'" %}
+{% assign normal_pubs = site.publications | reject_exp: "item", "item.date == '1990-01-01' and item.pub_post == 'Under review'" %}
 
 {% comment %}
- 其它的：要正常按年份分组
- 先去掉上面已经被分到 under_review 的条目，再 group_by_exp
+2. 对普通条目继续原来的分组和排序
 {% endcomment %}
-{% assign normal_pubs = site.publications
-  | reject:'date', null
-  | sort: "date"
-  | reverse
-  | group_by_exp:"item","item.date | date: '%Y'"
+{% assign pubs_by_year = normal_pubs 
+    | sort: "date"
+    | reverse 
+    | group_by_exp: "item", "item.date | date: '%Y'"
 %}
 
 <div class="row">
   <div class="col-12 col-lg-10">
+
     {% comment %}
-      先输出 Under review 部分（如果有的话）
+    3. 如果 under_review_pubs 不为空，先在页面顶部插入一个专门的块
+       标题为“Under review”
     {% endcomment %}
     {% if under_review_pubs.size > 0 %}
       <h2 class="pt-4" id="year-under-review">Under review</h2>
       <div class="my-0 p-0 bg-white shadow-sm rounded-sm">
         {% for item in under_review_pubs %}
-          {% include widgets/publication_item.html 
-             item=item 
-             hide_bottom_border=forloop.last 
-             first=forloop.first 
-             last=forloop.last %}
+          {% include widgets/publication_item.html item=item hide_bottom_border=forloop.last first=forloop.first last=forloop.last %}
         {% endfor %}
       </div>
     {% endif %}
 
     {% comment %}
-      再输出正常按年份分组的部分
+    4. 再按年份依次渲染普通条目
     {% endcomment %}
-    {% for year in normal_pubs %}
+    {% for year in pubs_by_year %}
       <h2 class="pt-4" id="year-{{ year.name }}">{{ year.name }}</h2>
       <div class="my-0 p-0 bg-white shadow-sm rounded-sm">
         {% for item in year.items %}
-          {% include widgets/publication_item.html 
-             item=item 
-             hide_bottom_border=forloop.last 
-             first=forloop.first 
-             last=forloop.last %}
+          {% include widgets/publication_item.html item=item hide_bottom_border=forloop.last first=forloop.first last=forloop.last %}
         {% endfor %}
       </div>
     {% endfor %}
@@ -62,18 +55,19 @@ body_attr: >-
   <div class="col-2 d-none d-lg-block">
     <div id="navbar-year" class="nav nav-pills flex-column sticky-top" style="top: 80px">
       {% comment %}
-        如果有 Under review 的文章，就在导航栏加一个跳转
+      5. 在右侧导航栏，如果有 under_review_pubs，则先插入一个“Under Review”链接
       {% endcomment %}
       {% if under_review_pubs.size > 0 %}
-        <a class="nav-link d-block" href="#year-under-review">Under review</a>
+        <a class="nav-link d-block" href="#year-under-review">Under Review</a>
       {% endif %}
 
       {% comment %}
-        原先的年份导航
+      6. 普通年份的导航链接和原逻辑一致
       {% endcomment %}
-      {% for year in normal_pubs %}
+      {% for year in pubs_by_year %}
         <a class="nav-link d-block" href="#year-{{ year.name }}">{{ year.name }}</a>
       {% endfor %}
     </div>
   </div>
+
 </div>
